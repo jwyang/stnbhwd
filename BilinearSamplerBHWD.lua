@@ -1,5 +1,5 @@
 local BilinearSamplerBHWD, parent = torch.class('nn.BilinearSamplerBHWD', 'nn.Module')
-
+--just a test
 --[[
    BilinearSamplerBHWD() :
    BilinearSamplerBHWD:updateOutput({inputImages, grids})
