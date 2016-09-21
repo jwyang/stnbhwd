@@ -118,12 +118,14 @@ function BilinearSamplerBHWD:updateGradInput(_input, _gradOutput)
 
   local gradInputImages = self.gradInput[1]
   local gradGrids = self.gradInput[2]
+  local gradCanvas = self.gradInput[3]
 
-  inputImages.nn.BilinearSamplerBHWD_updateGradInput(self, inputImages, grids, gradInputImages, gradGrids, gradOutput)
+  inputImages.nn.BilinearSamplerBHWD_updateGradInput(self, inputImages, grids, gradInputImages, gradGrids, gradCanvas, gradOutput)
 
   if _gradOutput:nDimension()==3 then
     self.gradInput[1]=self.gradInput[1]:select(1,1)
     self.gradInput[2]=self.gradInput[2]:select(1,1)
+    self.gradInput[3]=self.gradInput[3]:select(1,1)
   end
 
   return self.gradInput

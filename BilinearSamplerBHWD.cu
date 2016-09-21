@@ -157,6 +157,7 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
                                          float* gradInputImages_data, int gradInputImages_strideBatch, int gradInputImages_strideChannels, int gradInputImages_strideHeight, int gradInputImages_strideWidth,
                                          float* grids_data, int grids_strideBatch, int grids_strideYX, int grids_strideHeight, int grids_strideWidth,
                                          float* gradGrids_data, int gradGrids_strideBatch, int gradGrids_strideYX, int gradGrids_strideHeight, int gradGrids_strideWidth,
+                                         float* gradCanvas_data, int gradCanvas_strideBatch, int gradCanvas_strideYX, int gradCanvas_strideHeight, int gradCanvas_strideWidth,
                                          float* gradOutput_data, int gradOutput_strideBatch, int gradOutput_strideChannels, int gradOutput_strideHeight, int gradOutput_strideWidth,
                                          int inputImages_channels, int inputImages_height, int inputImages_width, int gradOutput_width)
 {
@@ -255,6 +256,10 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
             bottomRightDotProduct += inBottomRight * gradOutValue;
             if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomRightAddress + t], (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * gradOutValue);
          }
+
+         // jw2yang: copy the gradients outside the object region to canvas
+         if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn)
+            gradCanvas_data[gradOutputAddress + t] = gradOutValue;
       }
 
       /*
@@ -305,7 +310,8 @@ static int cunn_BilinearSamplerBHWD_updateGradInput(lua_State *L)
   THCudaTensor *grids = (THCudaTensor *)luaT_checkudata(L, 3, "torch.CudaTensor");
   THCudaTensor *gradInputImages = (THCudaTensor *)luaT_checkudata(L, 4, "torch.CudaTensor");
   THCudaTensor *gradGrids = (THCudaTensor *)luaT_checkudata(L, 5, "torch.CudaTensor");
-  THCudaTensor *gradOutput = (THCudaTensor *)luaT_checkudata(L, 6, "torch.CudaTensor");
+  THCudaTensor *gradCanvas = (THCudaTensor *)luaT_checkudata(L, 6, "torch.CudaTensor");
+  THCudaTensor *gradOutput = (THCudaTensor *)luaT_checkudata(L, 7, "torch.CudaTensor");
 
    dim3 blocks((gradOutput->size[2]+15)/16, gradOutput->size[1], gradOutput->size[0]);
    dim3 threads(32,16);
@@ -331,6 +337,11 @@ static int cunn_BilinearSamplerBHWD_updateGradInput(lua_State *L)
                                                       THCudaTensor_stride(state, gradGrids, 3),
                                                       THCudaTensor_stride(state, gradGrids, 1),
                                                       THCudaTensor_stride(state, gradGrids, 2),
+                                                      THCudaTensor_data(state, gradCanvas),
+                                                      THCudaTensor_stride(state, gradCanvas, 0),
+                                                      THCudaTensor_stride(state, gradCanvas, 3),
+                                                      THCudaTensor_stride(state, gradCanvas, 1),
+                                                      THCudaTensor_stride(state, gradCanvas, 2),
                                                       THCudaTensor_data(state, gradOutput),
                                                       THCudaTensor_stride(state, gradOutput, 0),
                                                       THCudaTensor_stride(state, gradOutput, 3),
