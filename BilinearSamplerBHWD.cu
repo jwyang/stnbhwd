@@ -44,16 +44,16 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    // x,y = coordinates (xOut = blockIdx.x*16+blockDim.y+threadIdx.y)
    // z = batch index
    // threadIdx.x : used for features (coalescing is trivial)
-      
+
    const int xOut = blockIdx.x*blockDim.y+threadIdx.y;
    const bool withinImageBounds = xOut < output_width;
    const bool withinGridBounds = blockIdx.x*blockDim.y + threadIdx.x / 2 < output_width;
    const int yOut = blockIdx.y;
    const int width = inputImages_width;
    const int height = inputImages_height;
-   
+
    const int b = blockIdx.z;
-   
+
    float yf,xf;
 
    __shared__ float gridData[32];
@@ -65,12 +65,12 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    if(!withinImageBounds) return;
    yf = gridData[threadIdx.y*2];
    xf = gridData[threadIdx.y*2+1];
-   
+
    int yInTopLeft, xInTopLeft;
    float yWeightTopLeft, xWeightTopLeft;
    getTopLeft(xf, inputImages_width, xInTopLeft, xWeightTopLeft);
    getTopLeft(yf, inputImages_height, yInTopLeft, yWeightTopLeft);
-   
+
    const int outAddress = output_strideBatch * b + output_strideHeight * yOut + output_strideWidth * xOut;
    const int inTopLeftAddress = inputImages_strideBatch * b + inputImages_strideHeight * yInTopLeft + inputImages_strideWidth * xInTopLeft;
    const int inTopRightAddress = inTopLeftAddress + inputImages_strideWidth;
@@ -91,6 +91,8 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    // interpolation happens here
    for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
    {
+      if (!topLeftIsIn & !topRightIsIn & !bottomLeftIsIn & bottomRightIsIn) continue; // do not change output_data
+
       if(topLeftIsIn) inTopLeft = inputImages_data[inTopLeftAddress + t];
       if(topRightIsIn) inTopRight = inputImages_data[inTopRightAddress + t];
       if(bottomLeftIsIn) inBottomLeft = inputImages_data[inBottomLeftAddress + t];
@@ -100,7 +102,7 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
         + (1 - xWeightTopLeft) * yWeightTopLeft * inTopRight
         + xWeightTopLeft * (1 - yWeightTopLeft) * inBottomLeft
         + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
-      
+
       output_data[outAddress + t] = v;
    }
 }
@@ -118,23 +120,23 @@ static int cunn_BilinearSamplerBHWD_updateOutput(lua_State *L)
    dim3 threads(32,16);
 
    /* assume BHWD */
-   bilinearSamplingFromGrid <<< blocks, threads, 0, THCState_getCurrentStream(state) >>> (THCudaTensor_data(state, inputImages), 
-                                                      THCudaTensor_stride(state, inputImages, 0), 
-                                                      THCudaTensor_stride(state, inputImages, 3), 
-                                                      THCudaTensor_stride(state, inputImages, 1), 
+   bilinearSamplingFromGrid <<< blocks, threads, 0, THCState_getCurrentStream(state) >>> (THCudaTensor_data(state, inputImages),
+                                                      THCudaTensor_stride(state, inputImages, 0),
+                                                      THCudaTensor_stride(state, inputImages, 3),
+                                                      THCudaTensor_stride(state, inputImages, 1),
                                                       THCudaTensor_stride(state, inputImages, 2),
-                                                      THCudaTensor_data(state, grids),  
-                                                      THCudaTensor_stride(state, grids, 0), 
+                                                      THCudaTensor_data(state, grids),
+                                                      THCudaTensor_stride(state, grids, 0),
                                                       THCudaTensor_stride(state, grids, 3),
-                                                      THCudaTensor_stride(state, grids, 1), 
+                                                      THCudaTensor_stride(state, grids, 1),
                                                       THCudaTensor_stride(state, grids, 2),
-                                                      THCudaTensor_data(state, output),  
-                                                      THCudaTensor_stride(state, output, 0), 
+                                                      THCudaTensor_data(state, output),
+                                                      THCudaTensor_stride(state, output, 0),
                                                       THCudaTensor_stride(state, output, 3),
-                                                      THCudaTensor_stride(state, output, 1), 
+                                                      THCudaTensor_stride(state, output, 1),
                                                       THCudaTensor_stride(state, output, 2),
                                                       THCudaTensor_size(state, inputImages, 3),
-                                                      THCudaTensor_size(state, inputImages, 1), 
+                                                      THCudaTensor_size(state, inputImages, 1),
                                                       THCudaTensor_size(state, inputImages, 2),
                                                       THCudaTensor_size(state, output, 2));
 
@@ -160,7 +162,7 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
    // x,y = coordinates
    // z = batch index
    // threads : used for features
-      
+
    const int xOut = blockIdx.x*blockDim.y+threadIdx.y;
    const bool withinImageBounds = xOut < gradOutput_width;
    const bool withinGridBounds = blockIdx.x*blockDim.y + threadIdx.x / 2 < gradOutput_width;
@@ -168,9 +170,9 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
    const int yOut = blockIdx.y;
    const int width = inputImages_width;
    const int height = inputImages_height;
-   
+
    const int b = blockIdx.z;
-   
+
    float yf,xf;
 
    __shared__ float gridData[32];
@@ -184,14 +186,14 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
    {
       yf = gridData[threadIdx.y*2];
       xf = gridData[threadIdx.y*2+1];
-      
 
-      
+
+
       int yInTopLeft, xInTopLeft;
       float yWeightTopLeft, xWeightTopLeft;
       getTopLeft(xf, inputImages_width, xInTopLeft, xWeightTopLeft);
       getTopLeft(yf, inputImages_height, yInTopLeft, yWeightTopLeft);
-      
+
       const int inTopLeftAddress = inputImages_strideBatch * b + inputImages_strideHeight * yInTopLeft + inputImages_strideWidth * xInTopLeft;
       const int inTopRightAddress = inTopLeftAddress + inputImages_strideWidth;
       const int inBottomLeftAddress = inTopLeftAddress + inputImages_strideHeight;
@@ -286,8 +288,8 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
    }// must put a big if condition in order not to hang at __syncthreads()...
    __syncthreads();
 
-   if(threadIdx.y==0 && withinGridBounds)      
-       gradGrids_data[b*gradGrids_strideBatch + yOut*gradGrids_strideHeight + xOut*gradGrids_strideWidth + threadIdx.x] = gridData[threadIdx.x];   
+   if(threadIdx.y==0 && withinGridBounds)
+       gradGrids_data[b*gradGrids_strideBatch + yOut*gradGrids_strideHeight + xOut*gradGrids_strideWidth + threadIdx.x] = gridData[threadIdx.x];
 }
 
 
@@ -307,33 +309,33 @@ static int cunn_BilinearSamplerBHWD_updateGradInput(lua_State *L)
    dim3 threads(32,16);
 
    backwardBilinearSampling <false> <<< blocks, threads, 0, THCState_getCurrentStream(state) >>> (
-                                                      THCudaTensor_data(state, inputImages), 
+                                                      THCudaTensor_data(state, inputImages),
                                                       THCudaTensor_stride(state, inputImages, 0),
                                                       THCudaTensor_stride(state, inputImages, 3),
                                                       THCudaTensor_stride(state, inputImages, 1),
                                                       THCudaTensor_stride(state, inputImages, 2),
-                                                      THCudaTensor_data(state, gradInputImages), 
+                                                      THCudaTensor_data(state, gradInputImages),
                                                       THCudaTensor_stride(state, gradInputImages, 0),
                                                       THCudaTensor_stride(state, gradInputImages, 3),
                                                       THCudaTensor_stride(state, gradInputImages, 1),
                                                       THCudaTensor_stride(state, gradInputImages, 2),
-                                                      THCudaTensor_data(state, grids), 
+                                                      THCudaTensor_data(state, grids),
                                                       THCudaTensor_stride(state, grids, 0),
                                                       THCudaTensor_stride(state, grids, 3),
                                                       THCudaTensor_stride(state, grids, 1),
                                                       THCudaTensor_stride(state, grids, 2),
-                                                      THCudaTensor_data(state, gradGrids), 
+                                                      THCudaTensor_data(state, gradGrids),
                                                       THCudaTensor_stride(state, gradGrids, 0),
                                                       THCudaTensor_stride(state, gradGrids, 3),
                                                       THCudaTensor_stride(state, gradGrids, 1),
                                                       THCudaTensor_stride(state, gradGrids, 2),
-                                                      THCudaTensor_data(state, gradOutput), 
+                                                      THCudaTensor_data(state, gradOutput),
                                                       THCudaTensor_stride(state, gradOutput, 0),
                                                       THCudaTensor_stride(state, gradOutput, 3),
                                                       THCudaTensor_stride(state, gradOutput, 1),
                                                       THCudaTensor_stride(state, gradOutput, 2),
                                                       THCudaTensor_size(state, inputImages, 3),
-                                                      THCudaTensor_size(state, inputImages, 1), 
+                                                      THCudaTensor_size(state, inputImages, 1),
                                                       THCudaTensor_size(state, inputImages, 2),
                                                       THCudaTensor_size(state, gradOutput, 2));
 
@@ -361,33 +363,33 @@ static int cunn_BilinearSamplerBHWD_updateGradInputOnlyGrid(lua_State *L)
    dim3 threads(32,16);
 
    backwardBilinearSampling <true> <<< blocks, threads, 0, THCState_getCurrentStream(state) >>> (
-                                                      THCudaTensor_data(state, inputImages), 
+                                                      THCudaTensor_data(state, inputImages),
                                                       THCudaTensor_stride(state, inputImages, 0),
                                                       THCudaTensor_stride(state, inputImages, 3),
                                                       THCudaTensor_stride(state, inputImages, 1),
                                                       THCudaTensor_stride(state, inputImages, 2),
-                                                      0, 
                                                       0,
                                                       0,
                                                       0,
                                                       0,
-                                                      THCudaTensor_data(state, grids), 
+                                                      0,
+                                                      THCudaTensor_data(state, grids),
                                                       THCudaTensor_stride(state, grids, 0),
                                                       THCudaTensor_stride(state, grids, 3),
                                                       THCudaTensor_stride(state, grids, 1),
                                                       THCudaTensor_stride(state, grids, 2),
-                                                      THCudaTensor_data(state, gradGrids), 
+                                                      THCudaTensor_data(state, gradGrids),
                                                       THCudaTensor_stride(state, gradGrids, 0),
                                                       THCudaTensor_stride(state, gradGrids, 3),
                                                       THCudaTensor_stride(state, gradGrids, 1),
                                                       THCudaTensor_stride(state, gradGrids, 2),
-                                                      THCudaTensor_data(state, gradOutput), 
+                                                      THCudaTensor_data(state, gradOutput),
                                                       THCudaTensor_stride(state, gradOutput, 0),
                                                       THCudaTensor_stride(state, gradOutput, 3),
                                                       THCudaTensor_stride(state, gradOutput, 1),
                                                       THCudaTensor_stride(state, gradOutput, 2),
                                                       THCudaTensor_size(state, inputImages, 3),
-                                                      THCudaTensor_size(state, inputImages, 1), 
+                                                      THCudaTensor_size(state, inputImages, 1),
                                                       THCudaTensor_size(state, inputImages, 2),
                                                       THCudaTensor_size(state, gradOutput, 2));
 
