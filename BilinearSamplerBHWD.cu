@@ -91,7 +91,7 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    // interpolation happens here
    for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
    {
-      if (!topLeftIsIn & !topRightIsIn & !bottomLeftIsIn & bottomRightIsIn) continue; // do not change output_data
+      if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) continue; // do not change output_data
 
       if(topLeftIsIn) inTopLeft = inputImages_data[inTopLeftAddress + t];
       if(topRightIsIn) inTopRight = inputImages_data[inTopRightAddress + t];
