@@ -2,7 +2,7 @@ package = "stnbhwd"
 version = "scm-1"
 
 source = {
-   url = "git://github.com/qassemoquab/stnbhwd.git",
+   url = "git://github.com/jwyang/stnbhwd.git",
 }
 
 description = {
