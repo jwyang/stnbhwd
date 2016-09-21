@@ -91,7 +91,9 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    // interpolation happens here
    for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
    {
-      if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) continue; // do not change output_data
+      // jw2yang: do not change output_data when it locates outside the source image,
+      // Todo: check backward after considering this case.
+      if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) continue;
 
       if(topLeftIsIn) inTopLeft = inputImages_data[inTopLeftAddress + t];
       if(topRightIsIn) inTopRight = inputImages_data[inTopRightAddress + t];
