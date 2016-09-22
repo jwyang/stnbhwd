@@ -104,8 +104,8 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
         + (1 - xWeightTopLeft) * yWeightTopLeft * inTopRight
         + xWeightTopLeft * (1 - yWeightTopLeft) * inBottomLeft
         + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
-
-      output_data[outAddress + t] = v;
+      // we do not replace the canvas region with foreground, instead, we add value together.
+      output_data[outAddress + t] = output_data[outAddress + t] + v;
    }
 }
 
@@ -257,9 +257,9 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
             if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomRightAddress + t], (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * gradOutValue);
          }
 
-         // jw2yang: copy the gradients outside the object region to canvas
-         if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn)
-            gradCanvas_data[gradOutputAddress + t] = gradOutValue;
+         // jw2yang: copy the gradients outside the object region to canvas, and inside region
+         // if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn)
+         gradCanvas_data[gradOutputAddress + t] = gradOutValue;
       }
 
       /*
