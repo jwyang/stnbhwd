@@ -105,7 +105,7 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
         + xWeightTopLeft * (1 - yWeightTopLeft) * inBottomLeft
         + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
       // we do not replace the canvas region with foreground, instead, we add value together.
-      output_data[outAddress + t] = output_data[outAddress + t] + v;
+      output_data[outAddress + t] = (output_data[outAddress + t] + v) / 2;
       // output_data[outAddress + t] = v;
    }
 }
@@ -229,43 +229,43 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
       for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
       {
          float gradOutValue = gradOutput_data[gradOutputAddress + t];
-         float gradOutValue_inner = gradOutValue;
+         float gradOutValue_inner = gradOutValue * 0.5;
          // bool between(int value, int lowerBound, int upperBound)
          if(topLeftIsIn)
          {
             float inTopLeft = inputImages_data[inTopLeftAddress + t];
             topLeftDotProduct += inTopLeft * gradOutValue_inner;
-            if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesTopLeftAddress + t], xWeightTopLeft * yWeightTopLeft * gradOutValue);
+            if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesTopLeftAddress + t], xWeightTopLeft * yWeightTopLeft * gradOutValue_inner);
          }
 
          if(topRightIsIn)
          {
             float inTopRight = inputImages_data[inTopRightAddress + t];
             topRightDotProduct += inTopRight * gradOutValue_inner;
-            if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesTopRightAddress + t], (1 - xWeightTopLeft) * yWeightTopLeft * gradOutValue);
+            if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesTopRightAddress + t], (1 - xWeightTopLeft) * yWeightTopLeft * gradOutValue_inner);
          }
 
          if(bottomLeftIsIn)
          {
             float inBottomLeft = inputImages_data[inBottomLeftAddress + t];
             bottomLeftDotProduct += inBottomLeft * gradOutValue_inner;
-            if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomLeftAddress + t], xWeightTopLeft * (1 - yWeightTopLeft) * gradOutValue);
+            if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomLeftAddress + t], xWeightTopLeft * (1 - yWeightTopLeft) * gradOutValue_inner);
          }
 
          if(bottomRightIsIn)
          {
             float inBottomRight = inputImages_data[inBottomRightAddress + t];
             bottomRightDotProduct += inBottomRight * gradOutValue_inner;
-            if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomRightAddress + t], (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * gradOutValue);
+            if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomRightAddress + t], (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * gradOutValue_inner);
          }
 
          // jw2yang: copy the gradients outside the object region to canvas, and inside region
-         // if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) {
+         if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) {
             gradCanvas_data[gradOutputAddress + t] = gradOutValue;
-         //}
-         // else {
-         //   gradCanvas_data[gradOutputAddress + t] = gradOutValue_inner;
-         // }
+         }
+         else {
+            gradCanvas_data[gradOutputAddress + t] = gradOutValue_inner;
+         }
       }
 
       /*
