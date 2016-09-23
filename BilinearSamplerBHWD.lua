@@ -26,7 +26,8 @@ end
 function BilinearSamplerBHWD:check(input, gradOutput)
    local inputImages = input[1]
 	 local grids = input[2]
-   local canvas = input[3]
+   local masks = input[3]
+   local canvas = input[4]
 
    assert(inputImages:isContiguous(), 'Input images have to be contiguous')
    assert(inputImages:nDimension()==4)
@@ -61,19 +62,22 @@ end
 function BilinearSamplerBHWD:updateOutput(input)
    local _inputImages = input[1]
    local _grids = input[2]
-   local _canvas = input[3]
+   local _masks = input[3]
+   local _canvas = input[4]
 
-   local inputImages, grids, canvas
+   local inputImages, grids, masks, canvas
    if _inputImages:nDimension()==3 then
       inputImages = addOuterDim(_inputImages)
       grids = addOuterDim(_grids)
+      masks = addOuterDim(_mask)
    else
       inputImages = _inputImages
       grids = _grids
+      masks = _mask
       canvas = _canvas
    end
 
-   local input = {inputImages, grids, canvas}
+   local input = {inputImages, grids, masks, canvas}
 
    self:check(input)
 
@@ -82,7 +86,7 @@ function BilinearSamplerBHWD:updateOutput(input)
    -- Note: instead of set all value be zero, we copy the value from canvas
    self.output:copy(canvas)
 
-   inputImages.nn.BilinearSamplerBHWD_updateOutput(self, inputImages, grids, self.output)
+   inputImages.nn.BilinearSamplerBHWD_updateOutput(self, inputImages, grids, masks, self.output)
 
    if _inputImages:nDimension()==3 then
       self.output=self.output:select(1,1)
@@ -94,21 +98,24 @@ end
 function BilinearSamplerBHWD:updateGradInput(_input, _gradOutput)
   local _inputImages = _input[1]
   local _grids = _input[2]
-  local _canvas = _input[3]
+  local _masks = _input[3]
+  local _canvas = _input[4]
 
-  local inputImages, grids, canvas, gradOutput
+  local inputImages, grids, masks, canvas, gradOutput
   if _inputImages:nDimension()==3 then
     inputImages = addOuterDim(_inputImages)
     grids = addOuterDim(_grids)
+    masks = addOuterDim(_masks)
     gradOutput = addOuterDim(_gradOutput)
   else
     inputImages = _inputImages
     grids = _grids
+    masks = _masks
     gradOutput = _gradOutput
     canvas = _canvas
   end
 
-  local input = {inputImages, grids, canvas}
+  local input = {inputImages, grids, masks, canvas}
 
   self:check(input, gradOutput)
 	for i=1,#input do
@@ -118,14 +125,16 @@ function BilinearSamplerBHWD:updateGradInput(_input, _gradOutput)
 
   local gradInputImages = self.gradInput[1]
   local gradGrids = self.gradInput[2]
-  local gradCanvas = self.gradInput[3]
+  local gradMasks = self.gradInput[3]
+  local gradCanvas = self.gradInput[4]
 
-  inputImages.nn.BilinearSamplerBHWD_updateGradInput(self, inputImages, grids, gradInputImages, gradGrids, gradCanvas, gradOutput)
+  inputImages.nn.BilinearSamplerBHWD_updateGradInput(self, inputImages, grids, masks, canvas, gradInputImages, gradGrids, gradMasks, gradCanvas, gradOutput)
 
   if _gradOutput:nDimension()==3 then
     self.gradInput[1]=self.gradInput[1]:select(1,1)
     self.gradInput[2]=self.gradInput[2]:select(1,1)
     self.gradInput[3]=self.gradInput[3]:select(1,1)
+    self.gradInput[4]=self.gradInput[4]:select(1,1)
   end
 
   return self.gradInput
