@@ -69,11 +69,11 @@ function BilinearSamplerBHWD:updateOutput(input)
    if _inputImages:nDimension()==3 then
       inputImages = addOuterDim(_inputImages)
       grids = addOuterDim(_grids)
-      masks = addOuterDim(_mask)
+      masks = addOuterDim(_masks)
    else
       inputImages = _inputImages
       grids = _grids
-      masks = _mask
+      masks = _masks
       canvas = _canvas
    end
 
