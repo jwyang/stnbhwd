@@ -95,12 +95,11 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    bool bottomLeftIsIn = between(xInTopLeft, 0, width-1) && between(yInTopLeft+1, 0, height-1);
    bool bottomRightIsIn = between(xInTopLeft+1, 0, width-1) && between(yInTopLeft+1, 0, height-1);
 
-/*
    if(topLeftIsIn) inTopLeftMask = masks_data[inTopLeftAddress];
    if(topRightIsIn) inTopRightMask = masks_data[inTopRightAddress];
    if(bottomLeftIsIn) inBottomLeftMask = masks_data[inBottomLeftAddress];
    if(bottomRightIsIn) inBottomRightMask = masks_data[inBottomRightAddress];
-*/
+
    m = xWeightTopLeft * yWeightTopLeft * inTopLeftMask
      + (1 - xWeightTopLeft) * yWeightTopLeft * inTopRightMask
      + xWeightTopLeft * (1 - yWeightTopLeft) * inBottomLeftMask
@@ -331,7 +330,7 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
            + xWeightTopLeft * (1 - yWeightTopLeft) * inBottomLeft
            + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
 
-         c = canvas_data[gradOutputAddress + t];
+         // c = canvas_data[gradOutputAddress + t];
 
          float gradMaskValue = gradOutValue * (v - c);
 
