@@ -78,7 +78,7 @@ function BilinearSamplerBHWD:updateOutput(input)
    end
 
    local input = {inputImages, grids, masks, canvas}
-
+   print(input)
    self:check(input)
 
    self.output:resize(inputImages:size(1), grids:size(2), grids:size(3), inputImages:size(4))
@@ -116,7 +116,8 @@ function BilinearSamplerBHWD:updateGradInput(_input, _gradOutput)
   end
 
   local input = {inputImages, grids, masks, canvas}
-
+  print(input)
+  
   self:check(input, gradOutput)
 	for i=1,#input do
     self.gradInput[i] = self.gradInput[i] or input[1].new()
