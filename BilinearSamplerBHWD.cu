@@ -480,13 +480,16 @@ static int cunn_BilinearSamplerBHWD_updateGradInput(lua_State *L)
 
 static int cunn_BilinearSamplerBHWD_updateGradInputOnlyGrid(lua_State *L)
 {
-  THCState *state = getCutorchState(L);
-  THCudaTensor *inputImages = (THCudaTensor *)luaT_checkudata(L, 2, "torch.CudaTensor");
-  THCudaTensor *grids = (THCudaTensor *)luaT_checkudata(L, 3, "torch.CudaTensor");
-  THCudaTensor *gradGrids = (THCudaTensor *)luaT_checkudata(L, 5, "torch.CudaTensor");
-  THCudaTensor *gradMasks = (THCudaTensor *)luaT_checkudata(L, 6, "torch.CudaTensor");
-  THCudaTensor *gradCanvas = (THCudaTensor *)luaT_checkudata(L, 7, "torch.CudaTensor");
-  THCudaTensor *gradOutput = (THCudaTensor *)luaT_checkudata(L, 8, "torch.CudaTensor");
+   THCState *state = getCutorchState(L);
+   THCudaTensor *inputImages = (THCudaTensor *)luaT_checkudata(L, 2, "torch.CudaTensor");
+   THCudaTensor *grids = (THCudaTensor *)luaT_checkudata(L, 3, "torch.CudaTensor");
+   THCudaTensor *masks = (THCudaTensor *)luaT_checkudata(L, 4, "torch.CudaTensor");
+   THCudaTensor *canvas = (THCudaTensor *)luaT_checkudata(L, 5, "torch.CudaTensor");
+   THCudaTensor *gradInputImages = (THCudaTensor *)luaT_checkudata(L, 6, "torch.CudaTensor");
+   THCudaTensor *gradGrids = (THCudaTensor *)luaT_checkudata(L, 7, "torch.CudaTensor");
+   THCudaTensor *gradMasks = (THCudaTensor *)luaT_checkudata(L, 8, "torch.CudaTensor");
+   THCudaTensor *gradCanvas = (THCudaTensor *)luaT_checkudata(L, 9, "torch.CudaTensor");
+   THCudaTensor *gradOutput = (THCudaTensor *)luaT_checkudata(L, 10, "torch.CudaTensor");
 
    dim3 blocks((gradOutput->size[2]+15)/16, gradOutput->size[1], gradOutput->size[0]);
    dim3 threads(32,16);
