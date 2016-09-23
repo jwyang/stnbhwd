@@ -259,11 +259,11 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
          }
 
          // jw2yang: copy the gradients outside the object region to canvas, and inside region
-         if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) {
+         //if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) {
             gradCanvas_data[gradOutputAddress + t] = gradOutValue;
-         } else {
-            gradCanvas_data[gradOutputAddress + t] = 0;
-         }
+         //} else {
+            //gradCanvas_data[gradOutputAddress + t] = 0;
+         //}
       }
 
       /*
