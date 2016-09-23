@@ -105,8 +105,8 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
         + xWeightTopLeft * (1 - yWeightTopLeft) * inBottomLeft
         + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
       // we do not replace the canvas region with foreground, instead, we add value together.
-      // output_data[outAddress + t] = output_data[outAddress + t] + v;
-      output_data[outAddress + t] = v;
+      output_data[outAddress + t] = output_data[outAddress + t] + v;
+      // output_data[outAddress + t] = v;
    }
 }
 
