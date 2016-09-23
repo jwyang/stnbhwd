@@ -229,7 +229,7 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
       for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
       {
          float gradOutValue = gradOutput_data[gradOutputAddress + t];
-         float gradOutValue_inner = gradOutValue * 0.5;
+         float gradOutValue_inner = gradOutValue;
          // bool between(int value, int lowerBound, int upperBound)
          if(topLeftIsIn)
          {
