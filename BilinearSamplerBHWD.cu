@@ -95,11 +95,12 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    bool bottomLeftIsIn = between(xInTopLeft, 0, width-1) && between(yInTopLeft+1, 0, height-1);
    bool bottomRightIsIn = between(xInTopLeft+1, 0, width-1) && between(yInTopLeft+1, 0, height-1);
 
+/*
    if(topLeftIsIn) inTopLeftMask = masks_data[inTopLeftAddress];
    if(topRightIsIn) inTopRightMask = masks_data[inTopRightAddress];
    if(bottomLeftIsIn) inBottomLeftMask = masks_data[inBottomLeftAddress];
    if(bottomRightIsIn) inBottomRightMask = masks_data[inBottomRightAddress];
-
+*/
    m = xWeightTopLeft * yWeightTopLeft * inTopLeftMask
      + (1 - xWeightTopLeft) * yWeightTopLeft * inTopRightMask
      + xWeightTopLeft * (1 - yWeightTopLeft) * inBottomLeftMask
