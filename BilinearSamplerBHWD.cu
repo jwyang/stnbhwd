@@ -218,8 +218,6 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
       yf = gridData[threadIdx.y*2];
       xf = gridData[threadIdx.y*2+1];
 
-
-
       int yInTopLeft, xInTopLeft;
       float yWeightTopLeft, xWeightTopLeft;
       getTopLeft(xf, inputImages_width, xInTopLeft, xWeightTopLeft);
@@ -234,6 +232,16 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
       const int gradInputImagesTopRightAddress = gradInputImagesTopLeftAddress + gradInputImages_strideWidth;
       const int gradInputImagesBottomLeftAddress = gradInputImagesTopLeftAddress + gradInputImages_strideHeight;
       const int gradInputImagesBottomRightAddress = gradInputImagesBottomLeftAddress + gradInputImages_strideWidth;
+
+      const int inTopLeftMaskAddress = masks_strideBatch * b + masks_strideHeight * yInTopLeft + masks_strideWidth * xInTopLeft;
+      const int inTopRightMaskAddress = inTopLeftMaskAddress + masks_strideWidth;
+      const int inBottomLeftMaskAddress = inTopLeftMaskAddress + masks_strideHeight;
+      const int inBottomRightMaskAddress = inBottomLeftMaskAddress + masks_strideWidth;
+
+      const int gradMasksTopLeftAddress = gradMasks_strideBatch * b + gradMasks_strideHeight * yInTopLeft + gradMasks_strideWidth * xInTopLeft;
+      const int gradMasksTopRightAddress = gradMasksTopLeftAddress + gradMasks_strideWidth;
+      const int gradMasksBottomLeftAddress = gradMasksTopLeftAddress + gradMasks_strideHeight;
+      const int gradMasksBottomRightAddress = gradMasksBottomLeftAddress + gradMasks_strideWidth;
 
       const int gradOutputAddress = gradOutput_strideBatch * b + gradOutput_strideHeight * yOut + gradOutput_strideWidth * xOut;
 
@@ -261,10 +269,10 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
       float inBottomLeftMask=0;
       float inBottomRightMask=0;
 
-      if(topLeftIsIn) inTopLeftMask = masks_data[inTopLeftAddress];
-      if(topRightIsIn) inTopRightMask = masks_data[inTopRightAddress];
-      if(bottomLeftIsIn) inBottomLeftMask = masks_data[inBottomLeftAddress];
-      if(bottomRightIsIn) inBottomRightMask = masks_data[inBottomRightAddress];
+      if(topLeftIsIn) inTopLeftMask = masks_data[inTopLeftMaskAddress];
+      if(topRightIsIn) inTopRightMask = masks_data[inTopRightMaskAddress];
+      if(bottomLeftIsIn) inBottomLeftMask = masks_data[inBottomLeftMaskAddress];
+      if(bottomRightIsIn) inBottomRightMask = masks_data[inBottomRightMaskAddress];
 
       m = xWeightTopLeft * yWeightTopLeft * inTopLeftMask
         + (1 - xWeightTopLeft) * yWeightTopLeft * inTopRightMask
@@ -330,32 +338,31 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
            + xWeightTopLeft * (1 - yWeightTopLeft) * inBottomLeft
            + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
 
-         // c = canvas_data[gradOutputAddress + t];
+         c = canvas_data[gradOutputAddress + t];
 
          float gradMaskValue = gradOutValue * (v - c);
 
-         /*
+
          // update gradient on mask map
          if(topLeftIsIn)
          {
-            if(!onlyGrid) atomicAdd(&gradMasks_data[gradInputImagesTopLeftAddress], xWeightTopLeft * yWeightTopLeft * gradMaskValue);
+            if(!onlyGrid) atomicAdd(&gradMasks_data[gradMasksTopLeftAddress], xWeightTopLeft * yWeightTopLeft * gradMaskValue);
          }
 
          if(topRightIsIn)
          {
-            if(!onlyGrid) atomicAdd(&gradMasks_data[gradInputImagesTopRightAddress], (1 - xWeightTopLeft) * yWeightTopLeft * gradMaskValue);
+            if(!onlyGrid) atomicAdd(&gradMasks_data[gradMasksTopRightAddress], (1 - xWeightTopLeft) * yWeightTopLeft * gradMaskValue);
          }
 
          if(bottomLeftIsIn)
          {
-            if(!onlyGrid) atomicAdd(&gradMasks_data[gradInputImagesBottomLeftAddress], xWeightTopLeft * (1 - yWeightTopLeft) * gradMaskValue);
+            if(!onlyGrid) atomicAdd(&gradMasks_data[gradMasksBottomLeftAddress], xWeightTopLeft * (1 - yWeightTopLeft) * gradMaskValue);
          }
 
          if(bottomRightIsIn)
          {
-            if(!onlyGrid) atomicAdd(&gradMasks_data[gradInputImagesBottomRightAddress], (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * gradMaskValue);
+            if(!onlyGrid) atomicAdd(&gradMasks_data[gradMasksBottomRightAddress], (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * gradMaskValue);
          }
-         */
       }
       /*
          Here we reduce the dot product and compute the grid gradient before writing it.
