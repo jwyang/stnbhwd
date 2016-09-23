@@ -106,7 +106,7 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
         + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
       // we do not replace the canvas region with foreground, instead, we add value together.
       // output_data[outAddress + t] = output_data[outAddress + t] + v;
-      output_data[outAddress + t] = (output_data[outAddress + t] + v) / 2;
+      output_data[outAddress + t] = (v);
    }
 }
 
@@ -233,28 +233,28 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
          if(topLeftIsIn)
          {
             float inTopLeft = inputImages_data[inTopLeftAddress + t];
-            topLeftDotProduct += inTopLeft * gradOutValue * 0.5;
+            topLeftDotProduct += inTopLeft * gradOutValue;
             if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesTopLeftAddress + t], xWeightTopLeft * yWeightTopLeft * gradOutValue);
          }
 
          if(topRightIsIn)
          {
             float inTopRight = inputImages_data[inTopRightAddress + t];
-            topRightDotProduct += inTopRight * gradOutValue * 0.5;
+            topRightDotProduct += inTopRight * gradOutValue;
             if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesTopRightAddress + t], (1 - xWeightTopLeft) * yWeightTopLeft * gradOutValue);
          }
 
          if(bottomLeftIsIn)
          {
             float inBottomLeft = inputImages_data[inBottomLeftAddress + t];
-            bottomLeftDotProduct += inBottomLeft * gradOutValue * 0.5;
+            bottomLeftDotProduct += inBottomLeft * gradOutValue;
             if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomLeftAddress + t], xWeightTopLeft * (1 - yWeightTopLeft) * gradOutValue);
          }
 
          if(bottomRightIsIn)
          {
             float inBottomRight = inputImages_data[inBottomRightAddress + t];
-            bottomRightDotProduct += inBottomRight * gradOutValue * 0.5;
+            bottomRightDotProduct += inBottomRight * gradOutValue;
             if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomRightAddress + t], (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * gradOutValue);
          }
 
@@ -262,7 +262,7 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
          if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) {
             gradCanvas_data[gradOutputAddress + t] = gradOutValue;
          } else {
-            gradCanvas_data[gradOutputAddress + t] = gradOutValue * 0.5;
+            gradCanvas_data[gradOutputAddress + t] = 0;
          }
       }
 
