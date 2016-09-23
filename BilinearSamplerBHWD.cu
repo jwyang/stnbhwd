@@ -331,8 +331,10 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
            + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
 
          c = canvas_data[gradOutputAddress + t];
+
          float gradMaskValue = gradOutValue * (v - c);
 
+         /*
          // update gradient on mask map
          if(topLeftIsIn)
          {
@@ -353,11 +355,8 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
          {
             if(!onlyGrid) atomicAdd(&gradMasks_data[gradInputImagesBottomRightAddress], (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * gradMaskValue);
          }
+         */
       }
-
-      /* compute the gradient on m: gradOutValue * (img - canvas) */
-
-
       /*
          Here we reduce the dot product and compute the grid gradient before writing it.
       */
