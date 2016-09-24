@@ -103,21 +103,23 @@ function BilinearSamplerBHWD:updateGradInput(_input, _gradOutput)
 
   local inputImages, grids, masks, canvas, gradOutput
   if _inputImages:nDimension()==3 then
+    print('add dimension')
     inputImages = addOuterDim(_inputImages)
     grids = addOuterDim(_grids)
     masks = addOuterDim(_masks)
+    canvas = addOuterDim(_canvas)
     gradOutput = addOuterDim(_gradOutput)
   else
     inputImages = _inputImages
     grids = _grids
     masks = _masks
-    gradOutput = _gradOutput
     canvas = _canvas
+    gradOutput = _gradOutput
   end
 
   local input = {inputImages, grids, masks, canvas}
   print(input)
-  
+
   self:check(input, gradOutput)
 	for i=1,#input do
     self.gradInput[i] = self.gradInput[i] or input[1].new()
