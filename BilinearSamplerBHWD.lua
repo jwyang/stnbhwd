@@ -85,7 +85,7 @@ function BilinearSamplerBHWD:updateOutput(input)
    -- Note: instead of set all value be zero, we copy the value from canvas
    self.output:copy(canvas)
 
-   -- inputImages.nn.BilinearSamplerBHWD_updateOutput(self, inputImages, grids, masks, self.output)
+   inputImages.nn.BilinearSamplerBHWD_updateOutput(self, inputImages, grids, masks, self.output)
 
    if _inputImages:nDimension()==3 then
       self.output=self.output:select(1,1)

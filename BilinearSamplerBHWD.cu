@@ -73,10 +73,16 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    getTopLeft(yf, inputImages_height, yInTopLeft, yWeightTopLeft);
 
    const int outAddress = output_strideBatch * b + output_strideHeight * yOut + output_strideWidth * xOut;
+
    const int inTopLeftAddress = inputImages_strideBatch * b + inputImages_strideHeight * yInTopLeft + inputImages_strideWidth * xInTopLeft;
    const int inTopRightAddress = inTopLeftAddress + inputImages_strideWidth;
    const int inBottomLeftAddress = inTopLeftAddress + inputImages_strideHeight;
    const int inBottomRightAddress = inBottomLeftAddress + inputImages_strideWidth;
+
+   const int inTopLeftMaskAddress = masks_strideBatch * b + masks_strideHeight * yInTopLeft + masks_strideWidth * xInTopLeft;
+   const int inTopRightMaskAddress = inTopLeftMaskAddress + masks_strideWidth;
+   const int inBottomLeftMaskAddress = inTopLeftMaskAddress + masks_strideHeight;
+   const int inBottomRightMaskAddress = inBottomLeftMaskAddress + masks_strideWidth;
 
    float v=0;
    float inTopLeft=0;
@@ -95,10 +101,10 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    bool bottomLeftIsIn = between(xInTopLeft, 0, width-1) && between(yInTopLeft+1, 0, height-1);
    bool bottomRightIsIn = between(xInTopLeft+1, 0, width-1) && between(yInTopLeft+1, 0, height-1);
 
-   if(topLeftIsIn) inTopLeftMask = masks_data[inTopLeftAddress];
-   if(topRightIsIn) inTopRightMask = masks_data[inTopRightAddress];
-   if(bottomLeftIsIn) inBottomLeftMask = masks_data[inBottomLeftAddress];
-   if(bottomRightIsIn) inBottomRightMask = masks_data[inBottomRightAddress];
+   if(topLeftIsIn) inTopLeftMask = masks_data[inTopLeftMaskAddress];
+   if(topRightIsIn) inTopRightMask = masks_data[inTopRightMaskAddress];
+   if(bottomLeftIsIn) inBottomLeftMask = masks_data[inBottomLeftMaskAddress];
+   if(bottomRightIsIn) inBottomRightMask = masks_data[inBottomRightMaskAddress];
 
    m = xWeightTopLeft * yWeightTopLeft * inTopLeftMask
      + (1 - xWeightTopLeft) * yWeightTopLeft * inTopRightMask
