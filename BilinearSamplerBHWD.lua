@@ -70,6 +70,7 @@ function BilinearSamplerBHWD:updateOutput(input)
       inputImages = addOuterDim(_inputImages)
       grids = addOuterDim(_grids)
       masks = addOuterDim(_masks)
+      canvas = addOuterDim(_canvas)
    else
       inputImages = _inputImages
       grids = _grids
@@ -85,7 +86,7 @@ function BilinearSamplerBHWD:updateOutput(input)
    -- Note: instead of set all value be zero, we copy the value from canvas
    self.output:copy(canvas)
 
-   inputImages.nn.BilinearSamplerBHWD_updateOutput(self, inputImages, grids, masks, self.output)
+   inputImages.nn.BilinearSamplerBHWD_updateOutput(self, inputImages, grids, masks, canvas, self.output)
 
    if _inputImages:nDimension()==3 then
       self.output=self.output:select(1,1)

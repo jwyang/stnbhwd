@@ -38,6 +38,7 @@ __device__ void sumReduceShMem(volatile float s[])
 __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImages_strideBatch, int inputImages_strideChannels, int inputImages_strideHeight, int inputImages_strideWidth,
                                          float* grids_data, int grids_strideBatch, int grids_strideYX, int grids_strideHeight, int grids_strideWidth,
                                          float* masks_data, int masks_strideBatch, int masks_strideYX, int masks_strideHeight, int masks_strideWidth,
+                                         float* canvas_data, int canvas_strideBatch, int canvas_strideYX, int canvas_strideHeight, int canvas_strideWidth,
                                          float* output_data, int output_strideBatch, int output_strideChannels, int output_strideHeight, int output_strideWidth,
                                          int inputImages_channels, int inputImages_height, int inputImages_width, int output_width)
 {
@@ -116,7 +117,8 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    {
       // jw2yang: do not change output_data when it locates outside the source image,
       // Todo: check backward after considering this case.
-      if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) continue;
+      if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn)
+        output_data[outAddress + t] = canvas_data[outAddress + t];
 
       if(topLeftIsIn) inTopLeft = inputImages_data[inTopLeftAddress + t];
       if(topRightIsIn) inTopRight = inputImages_data[inTopRightAddress + t];
@@ -129,7 +131,7 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
         + (1 - xWeightTopLeft) * (1 - yWeightTopLeft) * inBottomRight;
 
       // we do not replace the canvas region with foreground, instead, we add value together.
-      output_data[outAddress + t] = (1 - m) * output_data[outAddress + t] + m * v;
+      output_data[outAddress + t] = (1 - m) * canvas_data[outAddress + t] + m * v;
       // output_data[outAddress + t] = v;
    }
 }
@@ -141,7 +143,8 @@ static int cunn_BilinearSamplerBHWD_updateOutput(lua_State *L)
   THCudaTensor *inputImages = (THCudaTensor *)luaT_checkudata(L, 2, "torch.CudaTensor");
   THCudaTensor *grids = (THCudaTensor *)luaT_checkudata(L, 3, "torch.CudaTensor");
   THCudaTensor *masks = (THCudaTensor *)luaT_checkudata(L, 4, "torch.CudaTensor");
-  THCudaTensor *output = (THCudaTensor *)luaT_checkudata(L, 5, "torch.CudaTensor");
+  THCudaTensor *canvas = (THCudaTensor *)luaT_checkudata(L, 5, "torch.CudaTensor");
+  THCudaTensor *output = (THCudaTensor *)luaT_checkudata(L, 6, "torch.CudaTensor");
 
 
    dim3 blocks((output->size[2]+15)/16, output->size[1], output->size[0]);
@@ -163,6 +166,11 @@ static int cunn_BilinearSamplerBHWD_updateOutput(lua_State *L)
                                                       THCudaTensor_stride(state, masks, 3),
                                                       THCudaTensor_stride(state, masks, 1),
                                                       THCudaTensor_stride(state, masks, 2),
+                                                      THCudaTensor_data(state, canvas),
+                                                      THCudaTensor_stride(state, canvas, 0),
+                                                      THCudaTensor_stride(state, canvas, 3),
+                                                      THCudaTensor_stride(state, canvas, 1),
+                                                      THCudaTensor_stride(state, canvas, 2),
                                                       THCudaTensor_data(state, output),
                                                       THCudaTensor_stride(state, output, 0),
                                                       THCudaTensor_stride(state, output, 3),
@@ -318,7 +326,7 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
             bottomLeftDotProduct += inBottomLeft * gradOutValue_fg;
             if(!onlyGrid) atomicAdd(&gradInputImages_data[gradInputImagesBottomLeftAddress + t], xWeightTopLeft * (1 - yWeightTopLeft) * gradOutValue_fg);
          }
-
+         
          if(bottomRightIsIn)
          {
             float inBottomRight = inputImages_data[inBottomRightAddress + t];
