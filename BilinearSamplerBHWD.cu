@@ -73,8 +73,8 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    getTopLeft(xf, inputImages_width, xInTopLeft, xWeightTopLeft);
    getTopLeft(yf, inputImages_height, yInTopLeft, yWeightTopLeft);
 
-   xWeightTopLeft = 0.5;
-   yWeightTopLeft = 0.5;
+   // xWeightTopLeft = 0.5;
+   // yWeightTopLeft = 0.5;
 
    const int outAddress = output_strideBatch * b + output_strideHeight * yOut + output_strideWidth * xOut;
 
@@ -238,8 +238,8 @@ template<bool onlyGrid> __global__ void backwardBilinearSampling(float* inputIma
       getTopLeft(xf, inputImages_width, xInTopLeft, xWeightTopLeft);
       getTopLeft(yf, inputImages_height, yInTopLeft, yWeightTopLeft);
 
-      xWeightTopLeft = 0.5;
-      yWeightTopLeft = 0.5;
+      // xWeightTopLeft = 0.5;
+      // yWeightTopLeft = 0.5;
 
       const int inTopLeftAddress = inputImages_strideBatch * b + inputImages_strideHeight * yInTopLeft + inputImages_strideWidth * xInTopLeft;
       const int inTopRightAddress = inTopLeftAddress + inputImages_strideWidth;
