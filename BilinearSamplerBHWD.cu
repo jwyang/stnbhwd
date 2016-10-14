@@ -778,6 +778,10 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
      int yi_b, xi_r;
      float yWeight_b, xWeight_r;
 
+     // compute exact coordinates in source map
+     float xf_s = (xf + 1) * (width - 1) / 2;
+     float yf_s = (yf + 1) * (height - 1) / 2;
+
      // compute the top left, top right, bottom left, bottom right corner for current grid
      // compute the nearest bottom right coordiate in source map of top left grid coordiate
      getBottomRight(xs_tl, inputImages_width, xi_l, xWeight_l);
@@ -812,9 +816,9 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
          if (!between(y, 0, height-1)) continue;
          for (int x = xi_l; x <= xi_r; ++x) {
            if (!between(x, 0, width-1)) continue;
-           bias_x[id_point] = 2 * (x - xf); // multiply 2 since it is derivative of square
-           bias_y[id_point] = 2 * (y - yf); // multiply 2 since it is derivative of square
-           float weight = __expf(-bias_x[id_point] * bias_x[id_point] - bias_y[id_point] * bias_y[id_point]);
+           bias_x[id_point] = 2 * (x - xf_s); // multiply 2 since it is derivative of square
+           bias_y[id_point] = 2 * (y - yf_s); // multiply 2 since it is derivative of square
+           float weight = expf(-bias_x[id_point] * bias_x[id_point] - bias_y[id_point] * bias_y[id_point]);
            bias_x_weighted += weight * bias_x[id_point];
            bias_y_weighted += weight * bias_y[id_point];
            weight_sum += weight;
