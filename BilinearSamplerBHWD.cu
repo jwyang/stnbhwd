@@ -1,4 +1,5 @@
 #include "utils.h"
+#include < stdio.h >
 // Bilinear sampling is done in BHWD (coalescing is not obvious in BDHW)
 // we assume BHWD format in inputImages
 // we assume BHW(YX) format on grids
@@ -61,6 +62,9 @@ __global__ void bilinearSamplingFromGrid(float* inputImages_data, int inputImage
    __shared__ float gridData[32];
    if (threadIdx.y==0 && withinGridBounds)
    {
+     # if __CUDA_ARCH__>=200
+       printf("%d \n", grids_strideWidth);
+     #endif
       gridData[threadIdx.x] = grids_data[b*grids_strideBatch + yOut*grids_strideHeight + xOut*grids_strideWidth + threadIdx.x];
    }
    __syncthreads();
@@ -514,23 +518,36 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    // z = batch index
    // threadIdx.x : used for features (coalescing is trivial)
 
-   const int xOut = blockIdx.x*blockDim.y+threadIdx.y;
-   const bool withinImageBounds = xOut < output_width;
-   const bool withinGridBounds = blockIdx.x*blockDim.y + threadIdx.x / 2 < output_width;
+   // blocks.x: width / 16
+   // blocks.y: height
+   // blocks.z: batchSize
+   // blockDim.x.y.z: number of threads in each direction, here blockDim.y = 16
+   const int xOut = blockIdx.x*blockDim.y+threadIdx.y; // compute the x coordinate of feature map
    const int yOut = blockIdx.y;
+   const int b = blockIdx.z;
+
+   const bool withinImageBounds = xOut < output_width; // check whether x exceed the boundary
+   const bool withinGridBounds = blockIdx.x*blockDim.y + threadIdx.x / 2 < output_width; // check whether
+
    const int width = inputImages_width;
    const int height = inputImages_height;
-
-   const int b = blockIdx.z;
 
    float yf,xf;
 
    __shared__ float gridData[32];
+   __shared__ float gridData_r[32];
+   __shared__ float gridData_b[32];
+   __shared__ float gridData_br[32];
+
    if (threadIdx.y==0 && withinGridBounds)
    {
+     # if __CUDA_ARCH__>=200
+       printf("%d \n", grids_strideWidth);
+     #endif
       gridData[threadIdx.x] = grids_data[b*grids_strideBatch + yOut*grids_strideHeight + xOut*grids_strideWidth + threadIdx.x];
    }
-   __syncthreads();
+   __syncthreads(); // synchronize to ensure all threads begin to get data after storing
+
    if(!withinImageBounds) return;
    yf = gridData[threadIdx.y*2];
    xf = gridData[threadIdx.y*2+1];
@@ -620,9 +637,11 @@ static int cunn_SubSamplerBHWD_updateOutput(lua_State *L)
   THCudaTensor *canvas = (THCudaTensor *)luaT_checkudata(L, 5, "torch.CudaTensor");
   THCudaTensor *output = (THCudaTensor *)luaT_checkudata(L, 6, "torch.CudaTensor");
 
-
-   dim3 blocks((output->size[2]+15)/16, output->size[1], output->size[0]);
-   dim3 threads(32,16);
+  // blocks.x: width / 16
+  // blocks.y: height
+  // blocks.z: batchSize
+  dim3 blocks((output->size[2]+15)/16, output->size[1], output->size[0]);
+  dim3 threads(32,16);
 
    /* assume BHWD */
    subSamplingFromGrid <<< blocks, threads, 0, THCState_getCurrentStream(state) >>> (THCudaTensor_data(state, inputImages),
