@@ -620,7 +620,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
        if (!between(y, 0, height-1)) continue;
        for (int x = xi_l; x <= xi_r; ++x) {
          if (!between(x, 0, width-1)) continue;
-         float weight = expf(-(x - xf_s) * (x - xf_s) - (y - yf_s) * (y - yf_s));
+         float weight = expf(-(x - xf_s) * (x - xf_s) / 4 - (y - yf_s) * (y - yf_s) / 4);
          weight_sum += weight;
          weights[id_point] = weight;
          int address = masks_strideBatch * b + masks_strideHeight * y + masks_strideWidth * x;
@@ -663,6 +663,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
 static int cunn_SubSamplerBHWD_updateOutput(lua_State *L)
 {
   THCState *state = getCutorchState(L);
+
   THCudaTensor *inputImages = (THCudaTensor *)luaT_checkudata(L, 2, "torch.CudaTensor");
   THCudaTensor *grids = (THCudaTensor *)luaT_checkudata(L, 3, "torch.CudaTensor");
   THCudaTensor *masks = (THCudaTensor *)luaT_checkudata(L, 4, "torch.CudaTensor");
@@ -818,7 +819,7 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            if (!between(x, 0, width-1)) continue;
            bias_x[id_point] = (x - xf_s); // remember multiply 2 below since it is derivative of square
            bias_y[id_point] = (y - yf_s); // remember multiply 2 below since it is derivative of square
-           float weight = expf(-bias_x[id_point] * bias_x[id_point] - bias_y[id_point] * bias_y[id_point]);
+           float weight = expf(-bias_x[id_point] * bias_x[id_point] / 4 - bias_y[id_point] * bias_y[id_point] / 4);
            bias_x_weighted += weight * bias_x[id_point];
            bias_y_weighted += weight * bias_y[id_point];
            weight_sum += weight;
@@ -873,14 +874,14 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            for (int x = xi_l; x <= xi_r; ++x) {
              if (!between(x, 0, width-1)) continue;
              int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x;
-             grad_yf += 2 * gradOutValue_fg * inputImages_data[address + t]
+             grad_yf += gradOutValue_fg * inputImages_data[address + t]
                         * weights[id_point]
                         * (bias_y[id_point] - bias_y_weighted / weight_sum)
-                        / weight_sum;
-             grad_xf += 2 * gradOutValue_fg * inputImages_data[address + t]
+                        / weight_sum / 2;
+             grad_xf += gradOutValue_fg * inputImages_data[address + t]
                         * weights[id_point]
                         * (bias_x[id_point] - bias_x_weighted / weight_sum)
-                        / weight_sum;
+                        / weight_sum / 2;
              ++id_point;
            }
          }
