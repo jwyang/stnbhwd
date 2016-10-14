@@ -1,5 +1,5 @@
 #include "utils.h"
-#include < stdio.h >
+#include <stdio.h>
 // Bilinear sampling is done in BHWD (coalescing is not obvious in BDHW)
 // we assume BHWD format in inputImages
 // we assume BHW(YX) format on grids
