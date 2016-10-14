@@ -539,7 +539,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    const int yOut = blockIdx.y;
    const int b = blockIdx.z;
 
-   const bool withinImageBounds = xOut < output_width; // check whether x exceed the boundary
+   const bool withinImageBounds = xOut < output_width && yOut < output_height; // check whether x exceed the boundary
    const bool withinGridBounds = blockIdx.x*blockDim.y + threadIdx.x / 2 < output_width; // check whether
 
    if(!withinImageBounds || !withinGridBounds) return;
