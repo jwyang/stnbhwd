@@ -835,7 +835,8 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            for (int x = xi_l; x <= xi_r; +=x) {
              if (!between(x, 0, width-1)) continue;
              int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x + t;
-             v += weight[id_point] * inputImages_data[address];
+             v += weights[id_point] * inputImages_data[address];
+             ++id_point;
            }
          }
          v /= weight_sum;
@@ -870,6 +871,7 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
                         * weights[id_point]
                         * (bias_x[id_point] - bias_x_weighted / weight_sum)
                         / weight_sum;
+             ++id_point;
            }
          }
        }
