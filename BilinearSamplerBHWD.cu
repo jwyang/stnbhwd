@@ -740,8 +740,8 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
    {
      int xOut_l = xOut > 0 ? (xOut - 1) : xOut;
      int yOut_t = yOut > 0 ? (yOut - 1) : yOut;
-     int xOut_r = xOut < (output_width - 1) ? (xOut + 1) : xOut;
-     int yOut_b = yOut < (output_height - 1) ? (yOut + 1) : yOut;
+     int xOut_r = xOut < (gradOutput_width - 1) ? (xOut + 1) : xOut;
+     int yOut_b = yOut < (gradOutput_height - 1) ? (yOut + 1) : yOut;
 
      float yf = grids_data[b*grids_strideBatch + yOut*grids_strideHeight + xOut*grids_strideWidth];
      float xf = grids_data[b*grids_strideBatch + yOut*grids_strideHeight + xOut*grids_strideWidth + 1];
