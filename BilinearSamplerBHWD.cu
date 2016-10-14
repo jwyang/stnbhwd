@@ -552,7 +552,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    int xOut_r = xOut < (output_width - 1) ? (xOut + 1) : xOut;
    int yOut_b = yOut < (output_height - 1) ? (yOut + 1) : yOut;
 
-   float yf = grids_data[b*grids_strideBatch + yOuy*grids_strideHeight + xOut*grids_strideWidth];
+   float yf = grids_data[b*grids_strideBatch + yOut*grids_strideHeight + xOut*grids_strideWidth];
    float xf = grids_data[b*grids_strideBatch + yOut*grids_strideHeight + xOut*grids_strideWidth + 1];
 
    // get coordinates for four corners of target response map in the source response map
@@ -596,7 +596,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    int id_point = 0;
    for (int y = yi_t; y <= yi_b; ++y) {
      if (!between(y, 0, height-1)) continue;
-     for (int x = xi_l; x <= xi_r; +=x) {
+     for (int x = xi_l; x <= xi_r; ++x) {
        if (!between(x, 0, width-1)) continue;
        float weight = __expf((x - xf) * (x - xf) + (y - yf) * (y - yf));
        weight_sum += weight;
@@ -607,7 +607,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
      }
    }
    m /= weight_sum;
-   
+
    float v=0;
    bool topLeftIsIn = between(xi_l, 0, width-1) && between(yi_t, 0, height-1);
    bool topRightIsIn = between(xi_r, 0, width-1) && between(yi_t, 0, height-1);
@@ -629,7 +629,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
       id_point = 0;
       for (int y = yi_t; y <= yi_b; ++y) {
         if (!between(y, 0, height-1)) continue;
-        for (int x = xi_l; x <= xi_r; +=x) {
+        for (int x = xi_l; x <= xi_r; ++x) {
           if (!between(x, 0, width-1)) continue;
           int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x + t;
           v += weights[id_point] * inputImages_data[address];
