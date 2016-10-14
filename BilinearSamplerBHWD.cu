@@ -607,19 +607,8 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
      }
    }
    m /= weight_sum;
-
+   
    float v=0;
-   float inTopLeft=0;
-   float inTopRight=0;
-   float inBottomLeft=0;
-   float inBottomRight=0;
-
-   float m = 0;
-   float inTopLeftMask=0;
-   float inTopRightMask=0;
-   float inBottomLeftMask=0;
-   float inBottomRightMask=0;
-
    bool topLeftIsIn = between(xi_l, 0, width-1) && between(yi_t, 0, height-1);
    bool topRightIsIn = between(xi_r, 0, width-1) && between(yi_t, 0, height-1);
    bool bottomLeftIsIn = between(xi_l, 0, width-1) && between(yi_b, 0, height-1);
@@ -860,7 +849,7 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
          id_point = 0;
          for (int y = yi_t; y <= yi_b; ++y) {
            if (!between(y, 0, height-1)) continue;
-           for (int x = xi_l; x <= xi_r; +=x) {
+           for (int x = xi_l; x <= xi_r; ++x) {
              if (!between(x, 0, width-1)) continue;
              int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x;
              grad_yf += gradOutValue_fg * inputImages_data[address + t]
