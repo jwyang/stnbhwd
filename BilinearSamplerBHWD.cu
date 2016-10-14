@@ -619,8 +619,13 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
          ++id_point;
        }
      }
+
+     #if __CUDA_ARCH__>=200
+        printf("%f ", weight_sum);
+     #endif
+
      m /= weight_sum;
-     
+
      float v=0;
      // interpolation happens here
      // compute the address (location) for output
