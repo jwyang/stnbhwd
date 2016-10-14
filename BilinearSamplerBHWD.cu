@@ -828,7 +828,7 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
          float gradOutValue_fg = gradOutValue * m;
          float gradOutValue_bg = gradOutValue * (1 - m);
          // bool between(int value, int lowerBound, int upperBound)
-         v = 0;
+         float v = 0;
          id_point = 0;
          for (int y = yi_t; y <= yi_b; ++y) {
            if (!between(y, 0, height-1)) continue;
