@@ -640,6 +640,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
           if (!between(y, 0, height-1)) continue;
           for (int x = xi_l; x <= xi_r; ++x) {
             if (!between(x, 0, width-1)) continue;
+            printf("add something\n");
             int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x + t;
             v += weights[id_point] * inputImages_data[address];
             ++id_point;
