@@ -589,57 +589,67 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    getTopLeft(xs_br, inputImages_width, xi_r, xWeight_r);
    getTopLeft(ys_br, inputImages_height, yi_b, yWeight_b);
 
-   // compute average mask value in region [topleft, bottom right]
-   float weights[32];
-   float m = 0;
-   float weight_sum = 0;
-   int id_point = 0;
-   for (int y = yi_t; y <= yi_b; ++y) {
-     if (!between(y, 0, height-1)) continue;
-     for (int x = xi_l; x <= xi_r; ++x) {
-       if (!between(x, 0, width-1)) continue;
-       float weight = __expf((x - xf) * (x - xf) + (y - yf) * (y - yf));
-       weight_sum += weight;
-       weights[id_point] = weight;
-       int address = masks_strideBatch * b + masks_strideHeight * y + masks_strideWidth * x;
-       m += weight * masks_data[address];
-       ++id_point;
-     }
-   }
-   m /= weight_sum;
-
-   float v=0;
    bool topLeftIsIn = between(xi_l, 0, width-1) && between(yi_t, 0, height-1);
    bool topRightIsIn = between(xi_r, 0, width-1) && between(yi_t, 0, height-1);
    bool bottomLeftIsIn = between(xi_l, 0, width-1) && between(yi_b, 0, height-1);
    bool bottomRightIsIn = between(xi_r, 0, width-1) && between(yi_b, 0, height-1);
 
-   // interpolation happens here
-   // compute the address (location) for output
    const int outAddress = output_strideBatch * b + output_strideHeight * yOut + output_strideWidth * xOut;
 
-   for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
-   {
-      // jw2yang: do not change output_data when it locates outside the source image,
-      // Todo: check backward after considering this case.
-      if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn)
-        output_data[outAddress + t] = canvas_data[outAddress + t];
+   if (!topRightIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn) {
+     for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
+     {
+       output_data[outAddress + t] = canvas_data[outAddress + t];
+     }
+   } else {
+     // compute average mask value in region [topleft, bottom right]
+     float weights[32];
+     float m = 0;
+     float weight_sum = 0;
+     int id_point = 0;
+     for (int y = yi_t; y <= yi_b; ++y) {
+       if (!between(y, 0, height-1)) continue;
+       for (int x = xi_l; x <= xi_r; ++x) {
+         if (!between(x, 0, width-1)) continue;
+         float weight = __expf((x - xf) * (x - xf) + (y - yf) * (y - yf));
+         weight_sum += weight;
+         weights[id_point] = weight;
+         int address = masks_strideBatch * b + masks_strideHeight * y + masks_strideWidth * x;
+         m += weight * masks_data[address];
+         ++id_point;
+       }
+     }
+     m /= weight_sum;
 
-      v = 0;
-      id_point = 0;
-      for (int y = yi_t; y <= yi_b; ++y) {
-        if (!between(y, 0, height-1)) continue;
-        for (int x = xi_l; x <= xi_r; ++x) {
-          if (!between(x, 0, width-1)) continue;
-          int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x + t;
-          v += weights[id_point] * inputImages_data[address];
+     assert(weight_sum == 0);
+     
+     float v=0;
+     // interpolation happens here
+     // compute the address (location) for output
+
+     for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
+     {
+        // jw2yang: do not change output_data when it locates outside the source image,
+        // Todo: check backward after considering this case.
+        if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn)
+          output_data[outAddress + t] = canvas_data[outAddress + t];
+
+        v = 0;
+        id_point = 0;
+        for (int y = yi_t; y <= yi_b; ++y) {
+          if (!between(y, 0, height-1)) continue;
+          for (int x = xi_l; x <= xi_r; ++x) {
+            if (!between(x, 0, width-1)) continue;
+            int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x + t;
+            v += weights[id_point] * inputImages_data[address];
+          }
         }
-      }
-      v /= weight_sum;
+        v /= weight_sum;
 
-      // we do not replace the canvas region with foreground, instead, we add value together.
-      output_data[outAddress + t] = (1 - m) * canvas_data[outAddress + t] + m * v;
-      // output_data[outAddress + t] = v;
+        // we do not replace the canvas region with foreground, instead, we add value together.
+        output_data[outAddress + t] = (1 - m) * canvas_data[outAddress + t] + m * v;
+        // output_data[outAddress + t] = v;
+     }
    }
 }
 
