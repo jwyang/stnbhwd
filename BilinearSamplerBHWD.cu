@@ -589,12 +589,12 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    getTopLeft(xs_br, inputImages_width, xi_r, xWeight_r);
    getTopLeft(ys_br, inputImages_height, yi_b, yWeight_b);
 
-
+/*
    #if __CUDA_ARCH__>=200
       printf("%d %d %d %d \n", xi_l, xi_r, yi_t, yi_b);
       return;
    #endif
-
+*/
    bool topLeftIsIn = between(xi_l, 0, width-1) && between(yi_t, 0, height-1);
    bool topRightIsIn = between(xi_r, 0, width-1) && between(yi_t, 0, height-1);
    bool bottomLeftIsIn = between(xi_l, 0, width-1) && between(yi_b, 0, height-1);
