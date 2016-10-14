@@ -650,7 +650,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
         // we do not replace the canvas region with foreground, instead, we add value together.
         output_data[outAddress + t] = (1 - m) * canvas_data[outAddress + t] + m * v;
         #if __CUDA_ARCH__>=200
-           printf("%f \n", output_data[outAddress + t]);
+           printf("%f %f %f\n", output_data[outAddress + t], v, canvas_data[outAddress + t]);
         #endif
         // output_data[outAddress + t] = v;
      }
