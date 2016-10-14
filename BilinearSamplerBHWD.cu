@@ -620,8 +620,6 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
        }
      }
      m /= weight_sum;
-
-     assert(weight_sum == 0);
      
      float v=0;
      // interpolation happens here
