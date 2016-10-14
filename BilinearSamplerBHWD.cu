@@ -589,6 +589,12 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    getTopLeft(xs_br, inputImages_width, xi_r, xWeight_r);
    getTopLeft(ys_br, inputImages_height, yi_b, yWeight_b);
 
+
+   #if __CUDA_ARCH__>=200
+      printf("%d %d %d %d \n", xi_l, xi_r, yi_t, yi_b);
+      return;
+   #endif
+
    bool topLeftIsIn = between(xi_l, 0, width-1) && between(yi_t, 0, height-1);
    bool topRightIsIn = between(xi_r, 0, width-1) && between(yi_t, 0, height-1);
    bool bottomLeftIsIn = between(xi_l, 0, width-1) && between(yi_b, 0, height-1);
@@ -611,7 +617,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
        if (!between(y, 0, height-1)) continue;
        for (int x = xi_l; x <= xi_r; ++x) {
          if (!between(x, 0, width-1)) continue;
-         float weight = __expf((x - xf) * (x - xf) + (y - yf) * (y - yf));
+         float weight = __expf(-(x - xf) * (x - xf) - (y - yf) * (y - yf));
          weight_sum += weight;
          weights[id_point] = weight;
          int address = masks_strideBatch * b + masks_strideHeight * y + masks_strideWidth * x;
@@ -619,10 +625,6 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
          ++id_point;
        }
      }
-
-     #if __CUDA_ARCH__>=200
-        printf("%f ", weight_sum);
-     #endif
 
      m /= weight_sum;
 
@@ -808,9 +810,9 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
          if (!between(y, 0, height-1)) continue;
          for (int x = xi_l; x <= xi_r; ++x) {
            if (!between(x, 0, width-1)) continue;
-           bias_x[id_point] = 2 * (xf - x); // multiply 2 since it is derivative of square
-           bias_y[id_point] = 2 * (yf - y); // multiply 2 since it is derivative of square
-           float weight = __expf(bias_x[id_point] * bias_x[id_point] + bias_y[id_point] * bias_y[id_point]);
+           bias_x[id_point] = 2 * (x - xf); // multiply 2 since it is derivative of square
+           bias_y[id_point] = 2 * (y - yf); // multiply 2 since it is derivative of square
+           float weight = __expf(-bias_x[id_point] * bias_x[id_point] - bias_y[id_point] * bias_y[id_point]);
            bias_x_weighted += weight * bias_x[id_point];
            bias_y_weighted += weight * bias_y[id_point];
            weight_sum += weight;
