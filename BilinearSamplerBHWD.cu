@@ -581,6 +581,9 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    int yi_b, xi_r;
    float yWeight_b, xWeight_r;
 
+   // compute exact coordinates in source map
+   float xf_s = (xf + 1) * (width - 1) / 2;
+   float yf_s = (yf + 1) * (height - 1) / 2;
    // compute the top left, top right, bottom left, bottom right corner for current grid
    // compute the nearest bottom right coordiate in source map of top left grid coordiate
    getBottomRight(xs_tl, inputImages_width, xi_l, xWeight_l);
@@ -617,7 +620,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
        if (!between(y, 0, height-1)) continue;
        for (int x = xi_l; x <= xi_r; ++x) {
          if (!between(x, 0, width-1)) continue;
-         float weight = expf(-(float(x) - xf) * (float(x) - xf) - (float(y) - yf) * (float(y) - yf));
+         float weight = expf(-(x - xf_s) * (x - xf_s) - (y - yf_s) * (y - yf_s));
          weight_sum += weight;
          weights[id_point] = weight;
          int address = masks_strideBatch * b + masks_strideHeight * y + masks_strideWidth * x;
@@ -650,8 +653,8 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
         // we do not replace the canvas region with foreground, instead, we add value together.
         output_data[outAddress + t] = (1 - m) * canvas_data[outAddress + t] + m * v;
         #if __CUDA_ARCH__>=200
-           printf("%f %f\n", xf, yf);
-           // printf("%f %f %f %f\n", output_data[outAddress + t], v, weight_sum, canvas_data[outAddress + t]);
+           // printf("%f %f\n", xf, yf);
+           printf("%f %f %f %f\n", output_data[outAddress + t], v, weight_sum, canvas_data[outAddress + t]);
         #endif
         // output_data[outAddress + t] = v;
      }
