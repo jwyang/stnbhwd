@@ -816,8 +816,8 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
          if (!between(y, 0, height-1)) continue;
          for (int x = xi_l; x <= xi_r; ++x) {
            if (!between(x, 0, width-1)) continue;
-           bias_x[id_point] = 2 * (x - xf_s); // multiply 2 since it is derivative of square
-           bias_y[id_point] = 2 * (y - yf_s); // multiply 2 since it is derivative of square
+           bias_x[id_point] = (x - xf_s); // remember multiply 2 below since it is derivative of square
+           bias_y[id_point] = (y - yf_s); // remember multiply 2 below since it is derivative of square
            float weight = expf(-bias_x[id_point] * bias_x[id_point] - bias_y[id_point] * bias_y[id_point]);
            bias_x_weighted += weight * bias_x[id_point];
            bias_y_weighted += weight * bias_y[id_point];
@@ -873,11 +873,11 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            for (int x = xi_l; x <= xi_r; ++x) {
              if (!between(x, 0, width-1)) continue;
              int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x;
-             grad_yf += gradOutValue_fg * inputImages_data[address + t]
+             grad_yf += 2 * gradOutValue_fg * inputImages_data[address + t]
                         * weights[id_point]
                         * (bias_y[id_point] - bias_y_weighted / weight_sum)
                         / weight_sum;
-             grad_xf += gradOutValue_fg * inputImages_data[address + t]
+             grad_xf += 2 * gradOutValue_fg * inputImages_data[address + t]
                         * weights[id_point]
                         * (bias_x[id_point] - bias_x_weighted / weight_sum)
                         / weight_sum;
