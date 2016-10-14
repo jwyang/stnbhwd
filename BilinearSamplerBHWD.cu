@@ -617,7 +617,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
        if (!between(y, 0, height-1)) continue;
        for (int x = xi_l; x <= xi_r; ++x) {
          if (!between(x, 0, width-1)) continue;
-         float weight = 0; // __expf(-(x - xf) * (x - xf) - (y - yf) * (y - yf));
+         float weight = __expf(-(x - xf) * (x - xf) - (y - yf) * (y - yf));
          weight_sum += weight;
          weights[id_point] = weight;
          int address = masks_strideBatch * b + masks_strideHeight * y + masks_strideWidth * x;
