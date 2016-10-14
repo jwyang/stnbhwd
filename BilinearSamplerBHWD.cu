@@ -634,11 +634,6 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
 
      for(int t=threadIdx.x; t<inputImages_channels; t+= blockDim.x)
      {
-        // jw2yang: do not change output_data when it locates outside the source image,
-        // Todo: check backward after considering this case.
-        if (!topLeftIsIn && !topRightIsIn && !bottomLeftIsIn && !bottomRightIsIn)
-          output_data[outAddress + t] = canvas_data[outAddress + t];
-
         v = 0;
         id_point = 0;
         for (int y = yi_t; y <= yi_b; ++y) {
@@ -654,6 +649,9 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
 
         // we do not replace the canvas region with foreground, instead, we add value together.
         output_data[outAddress + t] = (1 - m) * canvas_data[outAddress + t] + m * v;
+        #if __CUDA_ARCH__>=200
+           printf("%f \n", output_data[outAddress + t]);
+        #endif
         // output_data[outAddress + t] = v;
      }
    }
