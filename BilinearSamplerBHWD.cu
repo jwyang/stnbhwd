@@ -944,6 +944,7 @@ static int cunn_SubSamplerBHWD_updateGradInput(lua_State *L)
                                                       THCudaTensor_size(state, inputImages, 3),
                                                       THCudaTensor_size(state, inputImages, 1),
                                                       THCudaTensor_size(state, inputImages, 2),
+                                                      THCudaTensor_size(state, gradOutput, 1),
                                                       THCudaTensor_size(state, gradOutput, 2));
 
 
