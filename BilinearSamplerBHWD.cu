@@ -886,7 +886,7 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            }
          }
        }
-       // gradGrids_data[b*gradGrids_strideBatch + yOut*gradGrids_strideHeight + xOut*gradGrids_strideWidth] = grad_yf * (inputImages_height-1) / 2;
+       gradGrids_data[b*gradGrids_strideBatch + yOut*gradGrids_strideHeight + xOut*gradGrids_strideWidth] = grad_yf * (inputImages_height-1) / 2;
        gradGrids_data[b*gradGrids_strideBatch + yOut*gradGrids_strideHeight + xOut*gradGrids_strideWidth + 1] = grad_xf * (inputImages_width-1) / 2;
      }
    }
