@@ -845,8 +845,8 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            if (!between(y, 0, height-1)) continue;
            for (int x = xi_l; x <= xi_r; ++x) {
              if (!between(x, 0, width-1)) continue;
-             int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x + t;
-             v += weights[id_point] * inputImages_data[address];
+             int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x;
+             v += weights[id_point] * inputImages_data[address + t];
              ++id_point;
            }
          }
