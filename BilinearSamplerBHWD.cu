@@ -586,11 +586,11 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    float yf_s = (yf + 1) * (height - 1) / 2;
    // compute the top left, top right, bottom left, bottom right corner for current grid
    // compute the nearest bottom right coordiate in source map of top left grid coordiate
-   getBottomRight(xs_tl, inputImages_width, xi_l, xWeight_l);
-   getBottomRight(ys_tl, inputImages_height, yi_t, yWeight_t);
+   getTopLeft(xs_tl, inputImages_width, xi_l, xWeight_l);
+   getTopLeft(ys_tl, inputImages_height, yi_t, yWeight_t);
    // compute the nearest top left coordiate in source map of bottom right grid coordiate
-   getTopLeft(xs_br, inputImages_width, xi_r, xWeight_r);
-   getTopLeft(ys_br, inputImages_height, yi_b, yWeight_b);
+   getBottomRight(xs_br, inputImages_width, xi_r, xWeight_r);
+   getBottomRight(ys_br, inputImages_height, yi_b, yWeight_b);
 
 /*
    #if __CUDA_ARCH__>=200
@@ -785,11 +785,11 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
 
      // compute the top left, top right, bottom left, bottom right corner for current grid
      // compute the nearest bottom right coordiate in source map of top left grid coordiate
-     getBottomRight(xs_tl, inputImages_width, xi_l, xWeight_l);
-     getBottomRight(ys_tl, inputImages_height, yi_t, yWeight_t);
+     getTopLeft(xs_tl, inputImages_width, xi_l, xWeight_l);
+     getTopLeft(ys_tl, inputImages_height, yi_t, yWeight_t);
      // compute the nearest top left coordiate in source map of bottom right grid coordiate
-     getTopLeft(xs_br, inputImages_width, xi_r, xWeight_r);
-     getTopLeft(ys_br, inputImages_height, yi_b, yWeight_b);
+     getBottomRight(xs_br, inputImages_width, xi_r, xWeight_r);
+     getBottomRight(ys_br, inputImages_height, yi_b, yWeight_b);
 
      bool topLeftIsIn = between(xi_l, 0, width-1) && between(yi_t, 0, height-1);
      bool topRightIsIn = between(xi_r, 0, width-1) && between(yi_t, 0, height-1);
