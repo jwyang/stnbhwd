@@ -586,11 +586,11 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
    float yf_s = (yf + 1) * (height - 1) / 2;
    // compute the top left, top right, bottom left, bottom right corner for current grid
    // compute the nearest bottom right coordiate in source map of top left grid coordiate
-   getTopLeft(xs_tl, inputImages_width, xi_l, xWeight_l);
-   getTopLeft(ys_tl, inputImages_height, yi_t, yWeight_t);
+   getBottomRight(xs_tl, inputImages_width, xi_l, xWeight_l);
+   getBottomRight(ys_tl, inputImages_height, yi_t, yWeight_t);
    // compute the nearest top left coordiate in source map of bottom right grid coordiate
-   getBottomRight(xs_br, inputImages_width, xi_r, xWeight_r);
-   getBottomRight(ys_br, inputImages_height, yi_b, yWeight_b);
+   getTopLeft(xs_br, inputImages_width, xi_r, xWeight_r);
+   getTopLeft(ys_br, inputImages_height, yi_b, yWeight_b);
 
 /*
    #if __CUDA_ARCH__>=200
@@ -620,7 +620,7 @@ __global__ void subSamplingFromGrid(float* inputImages_data, int inputImages_str
        if (!between(y, 0, height-1)) continue;
        for (int x = xi_l; x <= xi_r; ++x) {
          if (!between(x, 0, width-1)) continue;
-         float weight = expf(-(x - xf_s) * (x - xf_s) - (y - yf_s) * (y - yf_s));
+         float weight = expf(-(x - xf_s) * (x - xf_s) / 4 - (y - yf_s) * (y - yf_s) / 4);
          weight_sum += weight;
          weights[id_point] = weight;
          int address = masks_strideBatch * b + masks_strideHeight * y + masks_strideWidth * x;
@@ -785,11 +785,11 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
 
      // compute the top left, top right, bottom left, bottom right corner for current grid
      // compute the nearest bottom right coordiate in source map of top left grid coordiate
-     getTopLeft(xs_tl, inputImages_width, xi_l, xWeight_l);
-     getTopLeft(ys_tl, inputImages_height, yi_t, yWeight_t);
+     getBottomRight(xs_tl, inputImages_width, xi_l, xWeight_l);
+     getBottomRight(ys_tl, inputImages_height, yi_t, yWeight_t);
      // compute the nearest top left coordiate in source map of bottom right grid coordiate
-     getBottomRight(xs_br, inputImages_width, xi_r, xWeight_r);
-     getBottomRight(ys_br, inputImages_height, yi_b, yWeight_b);
+     getTopLeft(xs_br, inputImages_width, xi_r, xWeight_r);
+     getTopLeft(ys_br, inputImages_height, yi_b, yWeight_b);
 
      bool topLeftIsIn = between(xi_l, 0, width-1) && between(yi_t, 0, height-1);
      bool topRightIsIn = between(xi_r, 0, width-1) && between(yi_t, 0, height-1);
@@ -819,7 +819,7 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            if (!between(x, 0, width-1)) continue;
            bias_x[id_point] = (x - xf_s); // remember multiply 2 below since it is derivative of square
            bias_y[id_point] = (y - yf_s); // remember multiply 2 below since it is derivative of square
-           float weight = expf(-bias_x[id_point] * bias_x[id_point] - bias_y[id_point] * bias_y[id_point]);
+           float weight = expf(-bias_x[id_point] * bias_x[id_point] / 4 - bias_y[id_point] * bias_y[id_point] / 4);
            bias_x_weighted += weight * bias_x[id_point];
            bias_y_weighted += weight * bias_y[id_point];
            weight_sum += weight;
@@ -875,14 +875,14 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            for (int x = xi_l; x <= xi_r; ++x) {
              if (!between(x, 0, width-1)) continue;
              int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x;
-             grad_yf += 2 * gradOutValue_fg * inputImages_data[address + t]
+             grad_yf += gradOutValue_fg * inputImages_data[address + t]
                         * weights[id_point]
                         * (bias_y[id_point] - bias_y_weighted / weight_sum)
-                        / weight_sum;
-             grad_xf += 2 * gradOutValue_fg * inputImages_data[address + t]
+                        / weight_sum / 2;
+             grad_xf += gradOutValue_fg * inputImages_data[address + t]
                         * weights[id_point]
                         * (bias_x[id_point] - bias_x_weighted / weight_sum)
-                        / weight_sum;
+                        / weight_sum / 2;
              ++id_point;
            }
          }
