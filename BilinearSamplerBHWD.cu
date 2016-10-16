@@ -859,8 +859,9 @@ template<bool onlyGrid> __global__ void backwardSubSampling(float* inputImages_d
            if (!between(y, 0, height-1)) continue;
            for (int x = xi_l; x <= xi_r; ++x) {
              if (!between(x, 0, width-1)) continue;
-             int address = inputImages_strideBatch * b + inputImages_strideHeight * y + inputImages_strideWidth * x;
+             int address = gradInputImages_strideBatch * b + gradInputImages_strideHeight * y + gradInputImages_strideWidth * x;
              atomicAdd(&gradInputImages_data[address + t], weights[id_point] * gradOutValue_fg / weight_sum);
+             address = gradMasks_strideBatch * b + gradMasks_strideHeight * y + gradMasks_strideWidth * x;
              atomicAdd(&gradMasks_data[address], weights[id_point] * gradMaskValue / weight_sum);
              ++id_point;
            }
