@@ -86,8 +86,8 @@ function BilinearSamplerBHWD:updateOutput(input)
    -- Note: instead of set all value be zero, we copy the value from canvas
    self.output:copy(canvas)
 
-   -- inputImages.nn.BilinearSamplerBHWD_updateOutput(self, inputImages, grids, masks, canvas, self.output)
-   inputImages.nn.SubSamplerBHWD_updateOutput(self, inputImages, grids, masks, canvas, self.output)
+   inputImages.nn.BilinearSamplerBHWD_updateOutput(self, inputImages, grids, masks, canvas, self.output)
+   -- inputImages.nn.SubSamplerBHWD_updateOutput(self, inputImages, grids, masks, canvas, self.output)
 
    if _inputImages:nDimension()==3 then
       self.output=self.output:select(1,1)
@@ -131,8 +131,8 @@ function BilinearSamplerBHWD:updateGradInput(_input, _gradOutput)
   local gradMasks = self.gradInput[3]
   local gradCanvas = self.gradInput[4]
 
-  -- inputImages.nn.BilinearSamplerBHWD_updateGradInput(self, inputImages, grids, masks, canvas, gradInputImages, gradGrids, gradMasks, gradCanvas, gradOutput)
-  inputImages.nn.SubSamplerBHWD_updateGradInput(self, inputImages, grids, masks, canvas, gradInputImages, gradGrids, gradMasks, gradCanvas, gradOutput)
+  inputImages.nn.BilinearSamplerBHWD_updateGradInput(self, inputImages, grids, masks, canvas, gradInputImages, gradGrids, gradMasks, gradCanvas, gradOutput)
+  -- inputImages.nn.SubSamplerBHWD_updateGradInput(self, inputImages, grids, masks, canvas, gradInputImages, gradGrids, gradMasks, gradCanvas, gradOutput)
 
   if _gradOutput:nDimension()==3 then
     self.gradInput[1]=self.gradInput[1]:select(1,1)
