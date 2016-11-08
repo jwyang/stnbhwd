@@ -63,7 +63,7 @@ function BilinearSamplerBHWD:updateOutput(input)
    local _inputImages = input[1]
    local _grids = input[2]
    local _masks = input[3]
-   local _canvas = input[4]
+   local _canvas = input[4] or input[1]:clone():zero()
 
    local inputImages, grids, masks, canvas
    if _inputImages:nDimension()==3 then
@@ -100,7 +100,7 @@ function BilinearSamplerBHWD:updateGradInput(_input, _gradOutput)
   local _inputImages = _input[1]
   local _grids = _input[2]
   local _masks = _input[3]
-  local _canvas = _input[4]
+  local _canvas = _input[4] or _input[1]:clone():zero()
 
   local inputImages, grids, masks, canvas, gradOutput
   if _inputImages:nDimension()==3 then
