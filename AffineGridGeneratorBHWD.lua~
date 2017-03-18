@@ -1,4 +1,4 @@
-local AGG, parent = torch.class('nn.AffineGridGeneratorBHWD', 'nn.Module')
+local AGG, parent = torch.class('nn.AffineGridGeneratorBHWDLR', 'nn.Module')
 
 --[[
    AffineGridGeneratorBHWD(height, width) :

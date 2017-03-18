@@ -1,0 +1,7 @@
+/home/jwyang/torch/install/lib/luarocks/rocks/stnlrbhwd/scm-1/lib/libstnlr.so
+/home/jwyang/torch/install/lib/luarocks/rocks/stnlrbhwd/scm-1/lua/stnlr/init.lua
+/home/jwyang/torch/install/lib/luarocks/rocks/stnlrbhwd/scm-1/lua/stnlr/AffineTransformMatrixGeneratorLR.lua
+/home/jwyang/torch/install/lib/luarocks/rocks/stnlrbhwd/scm-1/lua/stnlr/AffineGridGeneratorBHWDLR.lua
+/home/jwyang/torch/install/lib/luarocks/rocks/stnlrbhwd/scm-1/lua/stnlr/test.lua
+/home/jwyang/torch/install/lib/luarocks/rocks/stnlrbhwd/scm-1/lua/stnlr/BilinearSamplerBHWDLR.lua
+/home/jwyang/torch/install/lib/luarocks/rocks/stnlrbhwd/scm-1/lib/libcustnlr.so

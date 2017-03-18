@@ -8,7 +8,7 @@ end
 
 require('stnlr.AffineTransformMatrixGeneratorLR')
 require('stnlr.AffineGridGeneratorBHWDLR')
-require('stnlr.BilinearSamplerBHWDLR')
+require('stnlr.BilinearSamplerBHWD')
 
 require('stnlr.test')
 

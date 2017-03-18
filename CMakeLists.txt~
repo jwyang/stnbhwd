@@ -46,7 +46,7 @@ LINK_DIRECTORIES("${Torch_INSTALL_LIB}")
 SET(src init.c)
 FILE(GLOB luasrc *.lua)
 ADD_TORCH_PACKAGE(stnlr "${src}" "${luasrc}")
-TARGET_LINK_LIBRARIES(stnlr luaT TH)
+TARGET_LINK_LIBRARIES(stn luaT TH)
 
 
 FIND_PACKAGE(CUDA 5.5)
@@ -56,18 +56,18 @@ IF (CUDA_FOUND)
 
   INCLUDE_DIRECTORIES("${Torch_INSTALL_INCLUDE}/THC")
   SET(src-cuda init.cu)
-  CUDA_ADD_LIBRARY(custnlr MODULE ${src-cuda})
-  TARGET_LINK_LIBRARIES(custnlr luaT THC TH)
+  CUDA_ADD_LIBRARY(custn MODULE ${src-cuda})
+  TARGET_LINK_LIBRARIES(custn luaT THC TH)
   IF(APPLE)
-    SET_TARGET_PROPERTIES(custnlr PROPERTIES
+    SET_TARGET_PROPERTIES(custn PROPERTIES
       LINK_FLAGS "-undefined dynamic_lookup")
   ENDIF()
   ### Torch packages supposes libraries prefix is "lib"
-  SET_TARGET_PROPERTIES(custnlr PROPERTIES
+  SET_TARGET_PROPERTIES(custn PROPERTIES
     PREFIX "lib"
     IMPORT_PREFIX "lib")
 
-  INSTALL(TARGETS custnlr
+  INSTALL(TARGETS custn
     RUNTIME DESTINATION "${Torch_INSTALL_LUA_CPATH_SUBDIR}"
     LIBRARY DESTINATION "${Torch_INSTALL_LUA_CPATH_SUBDIR}")
 ENDIF(CUDA_FOUND)

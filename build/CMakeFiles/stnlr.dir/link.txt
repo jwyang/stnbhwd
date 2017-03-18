@@ -1,0 +1,1 @@
+/usr/bin/cc  -fPIC  -fopenmp -O3 -DNDEBUG   -shared -Wl,-soname,libstnlr.so -o libstnlr.so CMakeFiles/stnlr.dir/init.c.o  -L/home/jwyang/torch/install/lib -lluaT /home/jwyang/torch/install/lib/libTH.so.0 /opt/OpenBLAS/lib/libopenblas.so -lrt -lm -Wl,-rpath,/home/jwyang/torch/install/lib:/opt/OpenBLAS/lib::::::::::::::: 

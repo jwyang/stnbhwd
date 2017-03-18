@@ -1,4 +1,4 @@
-local BilinearSamplerBHWD, parent = torch.class('nn.BilinearSamplerBHWD', 'nn.Module')
+local BilinearSamplerBHWD, parent = torch.class('nn.BilinearSamplerBHWDLR', 'nn.Module')
 --just a test
 --[[
    BilinearSamplerBHWD() :
@@ -121,7 +121,7 @@ function BilinearSamplerBHWD:updateGradInput(_input, _gradOutput)
   local input = {inputImages, grids, masks, canvas}
 
   self:check(input, gradOutput)
-	for i=1,#input do
+  for i=1,#input do
     self.gradInput[i] = self.gradInput[i] or input[1].new()
     self.gradInput[i]:resizeAs(input[i]):zero()
   end
